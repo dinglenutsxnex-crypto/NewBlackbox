@@ -29,34 +29,12 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug
-
       - name: Build Release APK
         run: ./gradlew assembleRelease
-
-      - name: Collect APKs
-        run: |
-          mkdir -p artifacts
-          find ./app/build/outputs/apk -name "*.apk" -exec cp {} artifacts/ \;
-
-      - name: Upload Debug APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: HAMMERSCALE-debug
-          path: artifacts/*debug*.apk
-          retention-days: 30
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
           name: HAMMERSCALE-release
-          path: artifacts/*release*.apk
-          retention-days: 30
-
-      - name: Upload All APKs (universal)
-        uses: actions/upload-artifact@v4
-        with:
-          name: HAMMERSCALE-all-apks
-          path: artifacts/
+          path: app/build/outputs/apk/release/*.apk
           retention-days: 30
