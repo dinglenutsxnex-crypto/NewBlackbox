@@ -6,7 +6,6 @@ import android.graphics.Color
 import android.net.Uri
 import android.net.VpnService
 import android.os.Bundle
-import android.provider.Settings
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.util.Log
@@ -68,9 +67,11 @@ class MainActivity : LoadingActivity() {
             initFab()
             initToolbarSubTitle()
 
+            
             checkStoragePermission()
+
+            
             checkVpnPermission()
-            checkOverlayPermission()
 
             try {
                 BlackBoxCore.get().onAfterMainActivityOnCreate(this)
@@ -79,47 +80,10 @@ class MainActivity : LoadingActivity() {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Critical error in onCreate: ${e.message}")
+            
             showErrorDialog("Failed to initialize app: ${e.message}")
         }
     }
-
-    private fun checkOverlayPermission() {
-        try {
-            if (!Settings.canDrawOverlays(this)) {
-                MaterialDialog(this).show {
-                    title(text = "Screen Overlay Permission")
-                    message(text = "The Debugger tool requires 'Display over other apps' permission to show the floating monitor while you use other apps.\n\nGrant this permission to enable the Debugger.")
-                    positiveButton(text = "Grant Permission") {
-                        try {
-                            val intent = Intent(
-                                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                Uri.parse("package:$packageName")
-                            )
-                            overlayPermissionResult.launch(intent)
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Error opening overlay settings: ${e.message}")
-                        }
-                    }
-                    negativeButton(text = "Later")
-                }
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error checking overlay permission: ${e.message}")
-        }
-    }
-
-    private val overlayPermissionResult =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            try {
-                if (Settings.canDrawOverlays(this)) {
-                    Log.d(TAG, "Screen overlay permission granted")
-                } else {
-                    Log.w(TAG, "Screen overlay permission still not granted")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error handling overlay permission result: ${e.message}")
-            }
-        }
 
     private fun applyHammerscaleTitle() {
         try {
@@ -457,10 +421,23 @@ class MainActivity : LoadingActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         try {
             when (item.itemId) {
+                R.id.main_git -> {
+                    val intent =
+                            Intent(
+                                    Intent.ACTION_VIEW,
+                                    Uri.parse("https://github.com/ALEX5402/NewBlackbox")
+                            )
+                    startActivity(intent)
+                }
                 R.id.main_setting -> {
                     SettingActivity.start(this)
                 }
+                R.id.main_tg -> {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/newblackboxa"))
+                    startActivity(intent)
+                }
                 R.id.fake_location -> {
+                    
                     val intent = Intent(this, FakeManagerActivity::class.java)
                     intent.putExtra("userID", 0)
                     startActivity(intent)

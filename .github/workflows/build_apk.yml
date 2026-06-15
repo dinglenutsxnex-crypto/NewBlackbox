@@ -23,21 +23,8 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install NDK 27.2.12479018
-        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;27.2.12479018" || true
-
       - name: Accept Android SDK licenses
         run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/libs.versions.toml') }}
-          restore-keys: |
-            gradle-
 
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
@@ -50,4 +37,4 @@ jobs:
         with:
           name: HAMMERSCALE-release
           path: app/build/outputs/apk/release/*.apk
-          retention-days: 7
+          retention-days: 1

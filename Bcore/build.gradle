@@ -3,7 +3,7 @@ apply plugin: 'com.android.library'
 android {
     namespace 'top.niunaijun.blackbox'
 
-    compileSdk rootProject.ext.compileSdkVer
+    compileSdk rootProject.ext.compileSdkVersion
 
 
     aidlPackagedList "android/app/IServiceConnection.aidl"
@@ -35,7 +35,7 @@ android {
         ndkBuild {
             path 'src/main/cpp/Android.mk'
         }
-        ndkVersion = "27.2.12479018"
+        ndkVersion = "29.0.13846066"
     }
 
     compileOptions {

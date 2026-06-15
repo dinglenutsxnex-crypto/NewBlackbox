@@ -9,7 +9,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.PopupMenu
-import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -28,7 +27,6 @@ import top.niunaijun.blackboxa.util.inflate
 import top.niunaijun.blackboxa.util.MemoryManager
 import top.niunaijun.blackboxa.util.toast
 import top.niunaijun.blackboxa.view.base.LoadingActivity
-import top.niunaijun.blackboxa.view.debugger.DebuggerActivity
 import top.niunaijun.blackboxa.view.main.MainActivity
 import java.util.*
 import kotlin.math.abs
@@ -49,22 +47,12 @@ class AppsFragment : Fragment() {
 
     companion object {
         private const val TAG = "AppsFragment"
-        const val DEBUGGER_PACKAGE = "com.hammerscale.debugger"
         
         fun newInstance(userID:Int): AppsFragment {
             val fragment = AppsFragment()
             val bundle = bundleOf("userID" to userID)
             fragment.arguments = bundle
             return fragment
-        }
-    }
-
-    private fun buildDebuggerEntry(): AppInfo {
-        return try {
-            val icon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_debugger)
-            AppInfo("Debugger", icon, DEBUGGER_PACKAGE, "", false)
-        } catch (e: Exception) {
-            AppInfo("Debugger", null, DEBUGGER_PACKAGE, "", false)
         }
     }
 
@@ -159,12 +147,8 @@ class AppsFragment : Fragment() {
 
             mAdapter.setItemClickListener { _, data, _ ->
                 try {
-                    if (data.packageName == DEBUGGER_PACKAGE) {
-                        DebuggerActivity.start(requireContext())
-                    } else {
-                        showLoading()
-                        viewModel.launchApk(data.packageName, userID)
-                    }
+                    showLoading()
+                    viewModel.launchApk(data.packageName, userID)
                 } catch (e: Exception) {
                     Log.e(TAG, "Error launching app: ${e.message}")
                     hideLoading()
@@ -351,9 +335,6 @@ class AppsFragment : Fragment() {
         try {
             mAdapter.setItemLongClickListener { view, data, _ ->
                 try {
-                    if (data.packageName == DEBUGGER_PACKAGE) {
-                        return@setItemLongClickListener
-                    }
                     popupMenu = PopupMenu(requireContext(),view).also {
                         it.inflate(R.menu.app_menu)
                         it.setOnMenuItemClickListener { item ->
@@ -403,10 +384,12 @@ class AppsFragment : Fragment() {
             viewModel.appsLiveData.observe(viewLifecycleOwner) {
                 try {
                     if (it != null) {
-                        val listWithDebugger = mutableListOf(buildDebuggerEntry())
-                        listWithDebugger.addAll(it)
-                        mAdapter.setItems(listWithDebugger)
-                        viewBinding.stateView.showContent()
+                        mAdapter.setItems(it)
+                        if (it.isEmpty()) {
+                            viewBinding.stateView.showEmpty()
+                        } else {
+                            viewBinding.stateView.showContent()
+                        }
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "Error observing apps data: ${e.message}")

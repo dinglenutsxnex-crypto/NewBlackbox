@@ -6,7 +6,7 @@ alias(libs.plugins.android.application) apply false
 }
 
 ext {
-    compileSdkVer = 35
+    compileSdkVersion = 35
     targetSdkVersion = 28 
 
     minSdk = 21
