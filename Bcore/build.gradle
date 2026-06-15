@@ -3,7 +3,7 @@ apply plugin: 'com.android.library'
 android {
     namespace 'top.niunaijun.blackbox'
 
-    compileSdk rootProject.ext.compileSdkVersion
+    compileSdk rootProject.ext.compileSdkVer
 
 
     aidlPackagedList "android/app/IServiceConnection.aidl"
