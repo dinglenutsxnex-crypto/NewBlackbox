@@ -8,6 +8,7 @@ import top.niunaijun.blackbox.BlackBoxCore
 import top.niunaijun.blackbox.app.BActivityThread
 import top.niunaijun.blackbox.app.configuration.AppLifecycleCallback
 import top.niunaijun.blackbox.app.configuration.ClientConfiguration
+import top.niunaijun.blackbox.utils.ShellUtils
 import top.niunaijun.blackboxa.app.App
 import top.niunaijun.blackboxa.app.rocker.RockerManager
 import top.niunaijun.blackboxa.biz.cache.AppSharedPreferenceDelegate
@@ -15,9 +16,11 @@ import top.niunaijun.blackboxa.biz.cache.AppSharedPreferenceDelegate
 
 class BlackBoxLoader {
 
-    private var mHideRoot by AppSharedPreferenceDelegate(App.getContext(), false)
+    private var mHideRoot by AppSharedPreferenceDelegate(App.getContext(), true)
 
-    private var mDaemonEnable by AppSharedPreferenceDelegate(App.getContext(), false)
+    private var mDaemonEnable by AppSharedPreferenceDelegate(App.getContext(), true)
+
+    private var mEnableRoot by AppSharedPreferenceDelegate(App.getContext(), true)
     private var mShowShortcutPermissionDialog by AppSharedPreferenceDelegate(App.getContext(), true)
 
     
@@ -25,12 +28,29 @@ class BlackBoxLoader {
 
     private var mDisableFlagSecure by AppSharedPreferenceDelegate(App.getContext(), false)
 
+    fun enableRoot(): Boolean {
+        return try {
+            mEnableRoot
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting enableRoot: ${e.message}")
+            true
+        }
+    }
+
+    fun invalidEnableRoot(enable: Boolean) {
+        try {
+            this.mEnableRoot = enable
+        } catch (e: Exception) {
+            Log.e(TAG, "Error setting enableRoot: ${e.message}")
+        }
+    }
+
     fun hideRoot(): Boolean {
         return try {
             mHideRoot
         } catch (e: Exception) {
             Log.e(TAG, "Error getting hideRoot: ${e.message}")
-            false
+            true
         }
     }
 
@@ -240,7 +260,16 @@ class BlackBoxLoader {
                                         mHideRoot
                                     } catch (e: Exception) {
                                         Log.e(TAG, "Error checking hideRoot: ${e.message}")
-                                        false
+                                        true
+                                    }
+                                }
+
+                                override fun isEnableRoot(): Boolean {
+                                    return try {
+                                        mEnableRoot
+                                    } catch (e: Exception) {
+                                        Log.e(TAG, "Error checking enableRoot: ${e.message}")
+                                        true
                                     }
                                 }
 
@@ -249,7 +278,7 @@ class BlackBoxLoader {
                                         mDaemonEnable
                                     } catch (e: Exception) {
                                         Log.e(TAG, "Error checking daemonEnable: ${e.message}")
-                                        false
+                                        true
                                     }
                                 }
 
@@ -300,6 +329,17 @@ class BlackBoxLoader {
 
     fun doOnCreate(context: Context) {
         try {
+            if (mEnableRoot) {
+                try {
+                    Thread {
+                        val hasRoot = ShellUtils.checkRootPermission()
+                        Log.d(TAG, "Root access available: $hasRoot")
+                    }.start()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error checking root permission: ${e.message}")
+                }
+            }
+
             BlackBoxCore.get().doCreate()
 
             

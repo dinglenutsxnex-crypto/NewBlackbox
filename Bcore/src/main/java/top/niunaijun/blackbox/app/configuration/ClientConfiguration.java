@@ -9,6 +9,10 @@ public abstract class ClientConfiguration {
         return false;
     }
 
+    public boolean isEnableRoot() {
+        return false;
+    }
+
 
 
     public abstract String getHostPackageName();

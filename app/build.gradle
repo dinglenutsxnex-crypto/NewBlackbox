@@ -48,7 +48,7 @@ android {
 
     applicationVariants.configureEach { variant ->
         variant.outputs.configureEach { output ->
-            output.outputFileName = "BlackBox_${variant.versionName}_${output.baseName}.apk"
+            output.outputFileName = "HAMMERSCALE_${variant.versionName}_${output.baseName}.apk"
         }
     }
 }

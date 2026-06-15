@@ -2,9 +2,12 @@ package top.niunaijun.blackboxa.view.main
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
 import android.net.VpnService
 import android.os.Bundle
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -59,6 +62,7 @@ class MainActivity : LoadingActivity() {
 
             setContentView(viewBinding.root)
             initToolbar(viewBinding.toolbarLayout.toolbar, R.string.app_name)
+            applyHammerscaleTitle()
             initViewPager()
             initFab()
             initToolbarSubTitle()
@@ -78,6 +82,21 @@ class MainActivity : LoadingActivity() {
             Log.e(TAG, "Critical error in onCreate: ${e.message}")
             
             showErrorDialog("Failed to initialize app: ${e.message}")
+        }
+    }
+
+    private fun applyHammerscaleTitle() {
+        try {
+            val title = "[ HAMMERSCALE ]"
+            val spannable = SpannableString(title)
+            val cyanColor = Color.parseColor("#00BCD4")
+            val grayColor = Color.parseColor("#AAAAAA")
+            spannable.setSpan(ForegroundColorSpan(grayColor), 0, 1, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE)
+            spannable.setSpan(ForegroundColorSpan(cyanColor), 2, 13, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE)
+            spannable.setSpan(ForegroundColorSpan(grayColor), 14, 15, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE)
+            viewBinding.toolbarLayout.toolbar.title = spannable
+        } catch (e: Exception) {
+            Log.e(TAG, "Error applying HAMMERSCALE title: ${e.message}")
         }
     }
 
