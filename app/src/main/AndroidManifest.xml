@@ -11,6 +11,12 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="29" />
 
+    
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
 
     <application
         android:name=".app.App"
@@ -52,5 +58,14 @@
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".view.debugger.DebuggerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.BlackBox" />
+
+        <service
+            android:name=".view.debugger.DebuggerFloatingService"
+            android:exported="false" />
     </application>
 </manifest>
