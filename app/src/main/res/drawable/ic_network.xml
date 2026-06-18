@@ -20,10 +20,10 @@
         android:pathData="M32,28 L40,28 L36,32 Z" />
     <rect
         android:fillColor="#E0F7FA"
-        android:x="8" android:y="18.5"
-        android:width="24" android:height="3" />
+        android:x="8dp" android:y="18.5dp"
+        android:width="24dp" android:height="3dp" />
     <rect
         android:fillColor="#E0F7FA"
-        android:x="16" android:y="26.5"
-        android:width="24" android:height="3" />
+        android:x="16dp" android:y="26.5dp"
+        android:width="24dp" android:height="3dp" />
 </vector>
