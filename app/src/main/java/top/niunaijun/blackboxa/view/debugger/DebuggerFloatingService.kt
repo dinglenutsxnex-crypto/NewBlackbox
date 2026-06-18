@@ -10,6 +10,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.util.Log
+import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -123,7 +124,10 @@ class DebuggerFloatingService : Service() {
     // ──────────────────────────────────────────────────────────────────────────
 
     private fun setupFloatView() {
-        floatView = LayoutInflater.from(this).inflate(R.layout.view_debugger_float, null)
+        // Services run with Theme.DeviceDefault — ?attr/ references from the app theme
+        // crash with UnsupportedOperationException. Wrap with the real app theme first.
+        val themedCtx = ContextThemeWrapper(this, R.style.Theme_BlackBox)
+        floatView = LayoutInflater.from(themedCtx).inflate(R.layout.view_debugger_float, null)
         setupBubble()
         setupPanel()
         windowManager.addView(floatView, params)

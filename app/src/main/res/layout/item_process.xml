@@ -6,7 +6,8 @@
     android:gravity="center_vertical"
     android:paddingStart="12dp"
     android:paddingEnd="12dp"
-    android:background="?attr/selectableItemBackground">
+    android:background="#1AFFFFFF"
+    android:foreground="?android:attr/selectableItemBackground">
 
     <View
         android:id="@+id/dot_running"

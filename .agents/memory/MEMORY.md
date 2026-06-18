@@ -1,0 +1,1 @@
+- [Service context theme crash](service-theme-crash.md) — inflating layouts in a Service needs ContextThemeWrapper or ?attr/ refs crash with UnsupportedOperationException
