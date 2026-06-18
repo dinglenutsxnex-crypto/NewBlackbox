@@ -24,6 +24,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import top.niunaijun.blackboxa.R
 import java.io.BufferedReader
+import java.io.File
 import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -36,6 +37,23 @@ class DebuggerFloatingService : Service() {
 
     companion object {
         private const val TAG = "DebuggerFloat"
+
+        private val METHOD_CALL_PATTERNS = listOf(
+            Regex("""^\s+at\s+([\w.$]+)\.([\w$<>]+)\("""),
+            Regex("""called\s+([\w.$]+)\.([\w$<>]+)\("""),
+            Regex("""invoke.*Method.*:\s*([\w.$]+)"""),
+            Regex("""->?\s*([\w.$]+)\.([\w$<>]+)\("""),
+        )
+
+        private val LIFECYCLE_KEYWORDS = listOf(
+            "onCreate", "onStart", "onResume", "onPause", "onStop", "onDestroy",
+            "onBind", "onUnbind", "onReceive", "onHandleIntent",
+            "onCreateView", "onViewCreated", "onActivityCreated",
+            "dispatchTouchEvent", "onClick", "onLongClick",
+            "onRequestPermissionsResult", "onActivityResult",
+        )
+
+        private val CALL_KEYWORDS = listOf("calling", "call", "invoke", "dispatch", "handle", "execute", "run", "start", "launch")
     }
 
     private lateinit var windowManager: WindowManager
@@ -53,7 +71,7 @@ class DebuggerFloatingService : Service() {
     private var logcatFuture: Future<*>? = null
     private var logcatProcess: Process? = null
 
-    private val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+    private val timeFormat = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault())
 
     private var processAdapter: ProcessListAdapter? = null
 
@@ -87,10 +105,8 @@ class DebuggerFloatingService : Service() {
         try {
             val inflater = LayoutInflater.from(this)
             floatView = inflater.inflate(R.layout.view_debugger_float, null)
-
             setupBubble()
             setupPanel()
-
             windowManager.addView(floatView, params)
         } catch (e: Exception) {
             Log.e(TAG, "Error showing floating view: ${e.message}")
@@ -127,9 +143,7 @@ class DebuggerFloatingService : Service() {
                     true
                 }
                 MotionEvent.ACTION_UP -> {
-                    if (!isDragging) {
-                        togglePanel()
-                    }
+                    if (!isDragging) togglePanel()
                     true
                 }
                 else -> false
@@ -144,28 +158,33 @@ class DebuggerFloatingService : Service() {
         val btnStop = floatView?.findViewById<Button>(R.id.btn_stop_logging) ?: return
         val btnFilterAll = floatView?.findViewById<Button>(R.id.btn_filter_all) ?: return
         val btnFilterError = floatView?.findViewById<Button>(R.id.btn_filter_error) ?: return
+        val btnFilterTrace = floatView?.findViewById<Button>(R.id.btn_filter_trace) ?: return
         val btnClear = floatView?.findViewById<Button>(R.id.btn_clear_logs) ?: return
         val rvProcesses = floatView?.findViewById<RecyclerView>(R.id.rv_processes) ?: return
 
         btnCollapse.setOnClickListener { collapsePanel() }
 
-        processAdapter = ProcessListAdapter { processInfo ->
-            selectProcess(processInfo)
-        }
+        processAdapter = ProcessListAdapter { processInfo -> selectProcess(processInfo) }
         rvProcesses.layoutManager = LinearLayoutManager(this)
         rvProcesses.adapter = processAdapter
 
         btnRefresh.setOnClickListener { loadProcesses() }
-
         btnStop.setOnClickListener { stopLogging() }
 
         btnFilterAll.setOnClickListener {
             filterMode = "ALL"
+            updateFilterLabel("▶ ALL LOGS")
             appendLog("[Debugger] Filter: ALL logs")
         }
         btnFilterError.setOnClickListener {
             filterMode = "ERROR"
-            appendLog("[Debugger] Filter: ERROR only")
+            updateFilterLabel("▶ ERRORS ONLY")
+            appendLog("[Debugger] Filter: ERROR/Exception only")
+        }
+        btnFilterTrace.setOnClickListener {
+            filterMode = "CALLS"
+            updateFilterLabel("▶ FUNCTION CALLS")
+            appendLog("[Debugger] Filter: Function calls + lifecycle events")
         }
         btnClear.setOnClickListener {
             logBuffer.clear()
@@ -186,12 +205,14 @@ class DebuggerFloatingService : Service() {
         }
     }
 
-    private fun togglePanel() {
-        if (isPanelExpanded) {
-            collapsePanel()
-        } else {
-            expandPanel()
+    private fun updateFilterLabel(label: String) {
+        mainHandler.post {
+            floatView?.findViewById<TextView>(R.id.tv_filter_label)?.text = label
         }
+    }
+
+    private fun togglePanel() {
+        if (isPanelExpanded) collapsePanel() else expandPanel()
     }
 
     private fun expandPanel() {
@@ -239,16 +260,13 @@ class DebuggerFloatingService : Service() {
             for (proc in runningProcesses) {
                 val procName = proc.processName ?: continue
                 if (procName == hostPkg) continue
-                if (procName.startsWith("$hostPkg:")) continue
                 if (proc.pkgList.isNullOrEmpty()) continue
 
                 for (pkg in proc.pkgList) {
                     if (pkg == hostPkg) continue
                     result.add(
                         ProcessInfo(
-                            name = proc.processName.substringAfterLast(":").let {
-                                if (it == proc.processName) pkg.substringAfterLast(".") else it
-                            },
+                            name = deriveDisplayName(proc.processName, pkg),
                             packageName = pkg,
                             pid = proc.pid,
                             processLine = proc.processName
@@ -262,10 +280,9 @@ class DebuggerFloatingService : Service() {
                 for (proc in runningProcesses) {
                     val procName = proc.processName ?: continue
                     if (!procName.startsWith("$hostPkg:")) continue
-                    val slot = procName.substringAfterLast(":")
                     result.add(
                         ProcessInfo(
-                            name = "Container Process",
+                            name = "Container Slot: ${procName.substringAfterLast(":")}",
                             packageName = procName,
                             pid = proc.pid,
                             processLine = procName
@@ -273,10 +290,18 @@ class DebuggerFloatingService : Service() {
                     )
                 }
             }
+
+            result.sortByDescending { it.pid }
         } catch (e: Exception) {
             Log.e(TAG, "Error getting running processes: ${e.message}")
         }
         return result
+    }
+
+    private fun deriveDisplayName(processName: String, pkg: String): String {
+        val colon = processName.lastIndexOf(':')
+        return if (colon >= 0) processName.substring(colon + 1)
+        else pkg.substringAfterLast('.')
     }
 
     private fun selectProcess(processInfo: ProcessInfo) {
@@ -291,10 +316,11 @@ class DebuggerFloatingService : Service() {
                 "📦 ${processInfo.packageName} (PID: ${processInfo.pid})"
 
             logBuffer.clear()
+            logBuffer.append("[Debugger] ━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
             logBuffer.append("[Debugger] Attached to: ${processInfo.packageName}\n")
             logBuffer.append("[Debugger] PID: ${processInfo.pid}\n")
             logBuffer.append("[Debugger] Process: ${processInfo.processLine}\n")
-            logBuffer.append("─".repeat(40) + "\n")
+            logBuffer.append("[Debugger] ━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
             updateLogView()
         }
 
@@ -319,16 +345,17 @@ class DebuggerFloatingService : Service() {
         logcatFuture = executor.submit {
             try {
                 val cmd = if (pid > 0) {
-                    arrayOf("logcat", "-v", "time", "--pid=$pid")
+                    arrayOf("logcat", "-v", "threadtime", "--pid=$pid")
                 } else {
-                    arrayOf("logcat", "-v", "time")
+                    arrayOf("logcat", "-v", "threadtime")
                 }
 
                 logcatProcess = Runtime.getRuntime().exec(cmd)
                 val reader = BufferedReader(InputStreamReader(logcatProcess!!.inputStream))
                 var line: String?
 
-                appendLog("[Debugger] Logcat stream started for PID $pid\n")
+                appendLog("[Debugger] Logcat stream started — PID $pid\n")
+                appendLog("[Debugger] Tap CALLS to see function calls only\n")
 
                 while (reader.readLine().also { line = it } != null) {
                     if (Thread.currentThread().isInterrupted) break
@@ -360,31 +387,82 @@ class DebuggerFloatingService : Service() {
 
     private fun shouldShowLog(line: String): Boolean {
         return when (filterMode) {
-            "ERROR" -> line.contains(" E ") || line.contains(" E/") || line.contains("Exception") || line.contains("Error")
+            "ERROR" -> {
+                line.contains(" E ") || line.contains(" E/") ||
+                line.contains("Exception") || line.contains("Error") ||
+                line.contains("FATAL") || line.contains("crash")
+            }
+            "CALLS" -> isMethodCallLine(line)
             else -> true
         }
     }
 
+    private fun isMethodCallLine(line: String): Boolean {
+        if (line.isBlank()) return false
+
+        if (line.contains("\tat ") || line.trimStart().startsWith("at ")) {
+            return true
+        }
+
+        for (keyword in LIFECYCLE_KEYWORDS) {
+            if (line.contains(keyword)) return true
+        }
+
+        for (pattern in METHOD_CALL_PATTERNS) {
+            if (pattern.containsMatchIn(line)) return true
+        }
+
+        val lower = line.lowercase()
+        for (kw in CALL_KEYWORDS) {
+            if (lower.contains(kw) && (lower.contains("method") || lower.contains("func") || lower.contains("class"))) {
+                return true
+            }
+        }
+
+        return false
+    }
+
     private fun formatLogLine(raw: String): String {
-        val colored = when {
+        if (filterMode == "CALLS") {
+            return formatCallLine(raw)
+        }
+        val prefixed = when {
             raw.contains(" E ") || raw.contains(" E/") -> "❌ $raw"
             raw.contains(" W ") || raw.contains(" W/") -> "⚠️ $raw"
             raw.contains(" D ") || raw.contains(" D/") -> "🔵 $raw"
             raw.contains(" I ") || raw.contains(" I/") -> "ℹ️ $raw"
-            raw.contains("Exception") || raw.contains("at ") -> "💥 $raw"
+            raw.contains("Exception") || raw.trimStart().startsWith("at ") -> "💥 $raw"
             else -> raw
         }
-        return colored + "\n"
+        return prefixed + "\n"
+    }
+
+    private fun formatCallLine(raw: String): String {
+        val trimmed = raw.trim()
+        return when {
+            trimmed.startsWith("at ") -> {
+                val method = trimmed.removePrefix("at ").substringBefore("(")
+                val cls = method.substringBeforeLast(".")
+                val fn = method.substringAfterLast(".")
+                "  📍 $fn  [$cls]\n"
+            }
+            LIFECYCLE_KEYWORDS.any { raw.contains(it) } -> {
+                val matched = LIFECYCLE_KEYWORDS.firstOrNull { raw.contains(it) } ?: ""
+                "🔄 lifecycle → $matched  |  $raw\n"
+            }
+            else -> "⚡ $raw\n"
+        }
     }
 
     private fun appendLog(text: String) {
         val timestamp = timeFormat.format(Date())
-        val entry = if (!text.startsWith("[Debugger]")) "[$timestamp] $text" else "$text\n"
+        val entry = if (text.startsWith("[Debugger]")) "$text\n" else "[$timestamp] $text"
         logBuffer.append(entry)
 
-        if (logBuffer.length > 80000) {
-            val trimmed = logBuffer.toString().takeLast(60000)
+        if (logBuffer.length > 100000) {
+            val trimmed = logBuffer.toString().takeLast(70000)
             logBuffer.clear()
+            logBuffer.append("...[older logs trimmed]...\n")
             logBuffer.append(trimmed)
         }
 

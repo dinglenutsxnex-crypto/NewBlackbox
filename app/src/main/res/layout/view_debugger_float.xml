@@ -14,7 +14,7 @@
 
     <LinearLayout
         android:id="@+id/debugger_panel"
-        android:layout_width="320dp"
+        android:layout_width="340dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:background="#EE0A0A0A"
@@ -158,6 +158,16 @@
                     android:background="@android:color/transparent" />
 
                 <Button
+                    android:id="@+id/btn_filter_trace"
+                    android:layout_width="0dp"
+                    android:layout_height="28dp"
+                    android:layout_weight="1"
+                    android:text="CALLS"
+                    android:textSize="10sp"
+                    android:textColor="#FFD740"
+                    android:background="@android:color/transparent" />
+
+                <Button
                     android:id="@+id/btn_clear_logs"
                     android:layout_width="0dp"
                     android:layout_height="28dp"
@@ -168,10 +178,21 @@
                     android:background="@android:color/transparent" />
             </LinearLayout>
 
+            <TextView
+                android:id="@+id/tv_filter_label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="12dp"
+                android:paddingBottom="2dp"
+                android:text="▶ ALL LOGS"
+                android:textColor="#444444"
+                android:textSize="9sp"
+                android:letterSpacing="0.1" />
+
             <ScrollView
                 android:id="@+id/scroll_logs"
                 android:layout_width="match_parent"
-                android:layout_height="220dp"
+                android:layout_height="240dp"
                 android:background="#111111"
                 android:fillViewport="true">
 
