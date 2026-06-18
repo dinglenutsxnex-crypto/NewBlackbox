@@ -29,4 +29,30 @@
         <item name="android:windowBackground">@drawable/splash</item>
     </style>
 
+    <!-- Chip button for the protocol filter bar in NetworkAnalyzerActivity -->
+    <style name="FilterChip">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">26dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
+        <item name="android:textSize">9sp</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:layout_marginEnd">4dp</item>
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+
+    <!-- Smaller chip for the status / direction sub-filter row -->
+    <style name="SubFilterChip">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">22dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:textSize">8sp</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:layout_marginEnd">4dp</item>
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+
 </resources>

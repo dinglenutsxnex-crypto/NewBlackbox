@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp"
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp"
+    android:foreground="?android:attr/selectableItemBackground">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bg_connection_card"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
+
+        <!-- Row 1: Protocol badge | Method | Host | Port -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tv_proto"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFFFFF"
+                android:textSize="9sp"
+                android:fontFamily="monospace"
+                android:textStyle="bold"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp"
+                android:layout_marginEnd="6dp" />
+
+            <TextView
+                android:id="@+id/tv_method"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFD54F"
+                android:textSize="10sp"
+                android:fontFamily="monospace"
+                android:layout_marginEnd="6dp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tv_host"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#CFD8DC"
+                android:textSize="11sp"
+                android:fontFamily="monospace"
+                android:textStyle="bold"
+                android:ellipsize="middle"
+                android:singleLine="true" />
+
+            <TextView
+                android:id="@+id/tv_port"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#37474F"
+                android:textSize="9sp"
+                android:fontFamily="monospace" />
+        </LinearLayout>
+
+        <!-- Row 2: Path (HTTP) -->
+        <TextView
+            android:id="@+id/tv_path"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#4DD0E1"
+            android:textSize="9sp"
+            android:fontFamily="monospace"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:paddingTop="2dp"
+            android:visibility="gone" />
+
+        <!-- Row 3: Response code | Bytes | Status | Time -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingTop="4dp">
+
+            <TextView
+                android:id="@+id/tv_resp_code"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="9sp"
+                android:fontFamily="monospace"
+                android:layout_marginEnd="8dp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tv_bytes"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#455A64"
+                android:textSize="9sp"
+                android:fontFamily="monospace" />
+
+            <TextView
+                android:id="@+id/tv_conn_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="9sp"
+                android:fontFamily="monospace"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:id="@+id/tv_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#263238"
+                android:textSize="9sp"
+                android:fontFamily="monospace" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

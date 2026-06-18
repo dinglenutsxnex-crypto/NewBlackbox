@@ -11,19 +11,24 @@ class AppsTouchCallBack(private val onMoveBlock: (from: Int, to: Int) -> Unit) :
         private const val TAG = "AppsTouchCallBack"
     }
 
+    // Returning false here so ItemTouchHelper does NOT consume the long-press
+    // gesture for drag initiation. Without this, the long-press that is supposed
+    // to open the popup menu is swallowed by drag-to-reorder and never reaches
+    // the adapter's onItemLongClickListener.
+    override fun isLongPressDragEnabled(): Boolean = false
+
     override fun getMovementFlags(
         recyclerView: RecyclerView,
         viewHolder: RecyclerView.ViewHolder
     ): Int {
         return try {
             makeMovementFlags(
-                ItemTouchHelper.UP or ItemTouchHelper.DOWN or 
-                ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT, 
+                ItemTouchHelper.UP or ItemTouchHelper.DOWN or
+                ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT,
                 0
             )
         } catch (e: Exception) {
             Log.e(TAG, "Error getting movement flags: ${e.message}")
-            
             makeMovementFlags(0, 0)
         }
     }

@@ -1,21 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="48dp"
+    android:layout_height="44dp"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:paddingStart="12dp"
-    android:paddingEnd="12dp"
-    android:background="#1AFFFFFF"
+    android:paddingStart="14dp"
+    android:paddingEnd="10dp"
+    android:background="#08FFFFFF"
     android:foreground="?android:attr/selectableItemBackground">
 
+    <!-- Status dot -->
     <View
         android:id="@+id/dot_running"
-        android:layout_width="8dp"
-        android:layout_height="8dp"
-        android:background="#4CAF50"
-        android:layout_marginEnd="10dp" />
+        android:layout_width="6dp"
+        android:layout_height="6dp"
+        android:layout_marginEnd="10dp"
+        android:background="#69F0AE" />
 
+    <!-- Name + package -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -26,8 +28,9 @@
             android:id="@+id/tv_process_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#EEEEEE"
-            android:textSize="12sp"
+            android:textColor="#CFD8DC"
+            android:textSize="11sp"
+            android:fontFamily="monospace"
             android:ellipsize="end"
             android:singleLine="true" />
 
@@ -35,18 +38,25 @@
             android:id="@+id/tv_process_pkg"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#888888"
-            android:textSize="10sp"
+            android:textColor="#455A64"
+            android:textSize="9sp"
+            android:fontFamily="monospace"
             android:ellipsize="end"
             android:singleLine="true" />
     </LinearLayout>
 
+    <!-- PID badge -->
     <TextView
         android:id="@+id/tv_process_pid"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="#00BCD4"
-        android:textSize="10sp"
-        android:fontFamily="monospace" />
+        android:paddingStart="6dp"
+        android:paddingEnd="6dp"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp"
+        android:textColor="#4DD0E1"
+        android:textSize="9sp"
+        android:fontFamily="monospace"
+        android:background="@drawable/bg_filter_active" />
 
 </LinearLayout>

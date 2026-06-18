@@ -16,8 +16,6 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
-import android.widget.Button
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -134,7 +132,8 @@ class DebuggerFloatingService : Service() {
     }
 
     private fun setupBubble() {
-        val bubble = floatView?.findViewById<ImageView>(R.id.debugger_bubble) ?: return
+        // Bubble is now a FrameLayout (not ImageView)
+        val bubble = floatView?.findViewById<View>(R.id.debugger_bubble) ?: return
         var startX = 0; var startY = 0
         var touchX = 0f; var touchY = 0f
         var dragging = false
@@ -149,7 +148,7 @@ class DebuggerFloatingService : Service() {
                 MotionEvent.ACTION_MOVE -> {
                     val dx = (e.rawX - touchX).toInt()
                     val dy = (e.rawY - touchY).toInt()
-                    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+                    if (kotlin.math.abs(dx) > 8 || kotlin.math.abs(dy) > 8) {
                         dragging = true
                         params.x = startX + dx; params.y = startY + dy
                         try { windowManager.updateViewLayout(floatView, params) } catch (_: Exception) { }
@@ -163,26 +162,32 @@ class DebuggerFloatingService : Service() {
     }
 
     private fun setupPanel() {
-        // ⚠️  No touch-listener that strips FLAG_NOT_FOCUSABLE — that was the freeze bug.
-        floatView?.findViewById<ImageView>(R.id.btn_collapse)
+        // All controls are now TextView — no Button or ImageView in the new layout.
+        floatView?.findViewById<TextView>(R.id.btn_collapse)
             ?.setOnClickListener { collapsePanel() }
 
-        floatView?.findViewById<Button>(R.id.btn_refresh_processes)
+        floatView?.findViewById<TextView>(R.id.btn_refresh_processes)
             ?.setOnClickListener { loadProcesses() }
 
-        floatView?.findViewById<Button>(R.id.btn_stop_logging)
+        floatView?.findViewById<TextView>(R.id.btn_stop_logging)
             ?.setOnClickListener { stopLogging() }
 
-        floatView?.findViewById<Button>(R.id.btn_filter_all)?.setOnClickListener {
-            filterMode = "ALL"; updateFilterLabel("▶ ALL LOGS")
+        floatView?.findViewById<TextView>(R.id.btn_filter_all)?.setOnClickListener {
+            filterMode = "ALL"
+            updateFilterLabel("▶  ALL LOGS")
+            highlightFilter("ALL")
         }
-        floatView?.findViewById<Button>(R.id.btn_filter_error)?.setOnClickListener {
-            filterMode = "ERROR"; updateFilterLabel("▶ ERRORS ONLY")
+        floatView?.findViewById<TextView>(R.id.btn_filter_error)?.setOnClickListener {
+            filterMode = "ERROR"
+            updateFilterLabel("▶  ERRORS ONLY")
+            highlightFilter("ERROR")
         }
-        floatView?.findViewById<Button>(R.id.btn_filter_trace)?.setOnClickListener {
-            filterMode = "CALLS"; updateFilterLabel("▶ FUNCTION CALLS")
+        floatView?.findViewById<TextView>(R.id.btn_filter_trace)?.setOnClickListener {
+            filterMode = "CALLS"
+            updateFilterLabel("▶  FUNCTION CALLS")
+            highlightFilter("CALLS")
         }
-        floatView?.findViewById<Button>(R.id.btn_clear_logs)?.setOnClickListener {
+        floatView?.findViewById<TextView>(R.id.btn_clear_logs)?.setOnClickListener {
             logBuffer.clear()
             floatView?.findViewById<TextView>(R.id.tv_logs)?.text = "Log cleared."
         }
@@ -201,7 +206,7 @@ class DebuggerFloatingService : Service() {
 
     private fun expandPanel() {
         isPanelExpanded = true
-        floatView?.findViewById<ImageView>(R.id.debugger_bubble)?.visibility = View.GONE
+        floatView?.findViewById<View>(R.id.debugger_bubble)?.visibility = View.GONE
         floatView?.findViewById<LinearLayout>(R.id.debugger_panel)?.visibility = View.VISIBLE
         try { windowManager.updateViewLayout(floatView, params) } catch (_: Exception) { }
         loadProcesses()
@@ -209,9 +214,24 @@ class DebuggerFloatingService : Service() {
 
     private fun collapsePanel() {
         isPanelExpanded = false
-        floatView?.findViewById<ImageView>(R.id.debugger_bubble)?.visibility = View.VISIBLE
+        floatView?.findViewById<View>(R.id.debugger_bubble)?.visibility = View.VISIBLE
         floatView?.findViewById<LinearLayout>(R.id.debugger_panel)?.visibility = View.GONE
         try { windowManager.updateViewLayout(floatView, params) } catch (_: Exception) { }
+    }
+
+    /** Update the active filter button highlight — active gets bg_filter_active, others clear. */
+    private fun highlightFilter(active: String) {
+        mainHandler.post {
+            val activeDrawable = resources.getDrawable(R.drawable.bg_filter_active, null)
+            mapOf(
+                "ALL"   to R.id.btn_filter_all,
+                "ERROR" to R.id.btn_filter_error,
+                "CALLS" to R.id.btn_filter_trace
+            ).forEach { (key, id) ->
+                floatView?.findViewById<TextView>(id)?.background =
+                    if (key == active) activeDrawable else null
+            }
+        }
     }
 
     // ──────────────────────────────────────────────────────────────────────────
