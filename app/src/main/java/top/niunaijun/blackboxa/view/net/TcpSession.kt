@@ -113,7 +113,8 @@ class TcpSession(
             tracker.get(sessionKey)?.let { rec ->
                 rec.bytesSent += payload.size
                 rec.lastSeen   = System.currentTimeMillis()
-                rec.addEvent(PacketEvent(System.currentTimeMillis(), Direction.OUTBOUND, payload.size, "→ ${payload.size}B"))
+                rec.addEvent(PacketEvent(System.currentTimeMillis(), Direction.OUTBOUND, payload.size, "→ ${payload.size}B",
+                    rawData = payload.copyOf(minOf(payload.size, PacketEvent.MAX_RAW_PER_EVENT))))
             }
             inspectPayload(payload, outbound = true)
         } catch (e: Exception) {
@@ -156,7 +157,8 @@ class TcpSession(
                     tracker.get(sessionKey)?.let { rec ->
                         rec.bytesReceived += n
                         rec.lastSeen = System.currentTimeMillis()
-                        rec.addEvent(PacketEvent(System.currentTimeMillis(), Direction.INBOUND, n, "← ${n}B"))
+                        rec.addEvent(PacketEvent(System.currentTimeMillis(), Direction.INBOUND, n, "← ${n}B",
+                        rawData = data.copyOf(minOf(n, PacketEvent.MAX_RAW_PER_EVENT))))
                     }
 
                     // Build TCP packet: src=server, dst=client

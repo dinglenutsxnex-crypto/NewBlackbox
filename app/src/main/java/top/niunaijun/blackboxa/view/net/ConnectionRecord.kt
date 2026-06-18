@@ -2,12 +2,20 @@ package top.niunaijun.blackboxa.view.net
 
 import java.util.concurrent.atomic.AtomicLong
 
-data class PacketEvent(
+class PacketEvent(
     val timestamp: Long,
     val direction: Direction,
     val size: Int,
-    val info: String
-)
+    val info: String,
+    val rawData: ByteArray? = null  // stores full payload — no artificial cap
+) {
+    companion object {
+        // Display limit in UI hex view before "LOAD MORE" appears
+        const val UI_DISPLAY_LIMIT = 2048
+        // Per-event storage cap — large enough for any single UDP datagram or TUN read
+        const val MAX_RAW_PER_EVENT = 65536
+    }
+}
 
 data class ConnectionRecord(
     val id: Long,
@@ -27,13 +35,12 @@ data class ConnectionRecord(
     @Volatile var bytesReceived: Long = 0L
     @Volatile var lastSeen: Long = startTime
 
-    // Cap packet events at 100 to bound memory per connection
-    private val _events = ArrayDeque<PacketEvent>(100)
+    private val _events = ArrayDeque<PacketEvent>(200)
     val events: List<PacketEvent> get() = synchronized(_events) { _events.toList() }
 
     fun addEvent(event: PacketEvent) {
         synchronized(_events) {
-            if (_events.size >= 100) _events.removeFirst()
+            if (_events.size >= 200) _events.removeFirst()
             _events.addLast(event)
         }
     }

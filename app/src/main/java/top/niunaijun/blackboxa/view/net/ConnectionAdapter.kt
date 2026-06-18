@@ -1,6 +1,7 @@
 package top.niunaijun.blackboxa.view.net
 
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,6 +10,9 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import top.niunaijun.blackboxa.R
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class ConnectionAdapter(
     private val onClick: (ConnectionRecord) -> Unit
@@ -17,20 +21,19 @@ class ConnectionAdapter(
     companion object {
         private val DIFF = object : DiffUtil.ItemCallback<ConnectionRecord>() {
             override fun areItemsTheSame(a: ConnectionRecord, b: ConnectionRecord) = a.id == b.id
-            override fun areContentsTheSame(a: ConnectionRecord, b: ConnectionRecord): Boolean {
-                return a.status == b.status &&
-                       a.host == b.host &&
-                       a.bytesSent == b.bytesSent &&
-                       a.bytesReceived == b.bytesReceived &&
-                       a.responseCode == b.responseCode
-            }
+            override fun areContentsTheSame(a: ConnectionRecord, b: ConnectionRecord) =
+                a.status == b.status &&
+                a.host == b.host &&
+                a.bytesSent == b.bytesSent &&
+                a.bytesReceived == b.bytesReceived &&
+                a.responseCode == b.responseCode
         }
+        private val TS_FMT = SimpleDateFormat("MM-dd HH:mm:ss", Locale.US)
     }
 
-    // Active filters — set externally, then call submitFiltered()
-    var filterProto: Protocol? = null      // null = show all
-    var filterStatus: ConnStatus? = null   // null = show all
-    var filterDirection: Direction? = null // null = show all
+    var filterProto: Protocol?    = null
+    var filterStatus: ConnStatus? = null
+    var filterDirection: Direction? = null
 
     private var fullList: List<ConnectionRecord> = emptyList()
 
@@ -42,8 +45,7 @@ class ConnectionAdapter(
     fun applyFilters() {
         var filtered = fullList
         filterProto?.let { p ->
-            val targetLabel = p.label
-            filtered = filtered.filter { it.displayProto == targetLabel || it.protocol == p }
+            filtered = filtered.filter { it.displayProto == p.label || it.protocol == p }
         }
         filterStatus?.let { s -> filtered = filtered.filter { it.status == s } }
         filterDirection?.let { d ->
@@ -57,15 +59,16 @@ class ConnectionAdapter(
     }
 
     inner class VH(view: View) : RecyclerView.ViewHolder(view) {
-        val tvProto:      TextView = view.findViewById(R.id.tv_proto)
-        val tvHost:       TextView = view.findViewById(R.id.tv_host)
-        val tvPath:       TextView = view.findViewById(R.id.tv_path)
-        val tvMethod:     TextView = view.findViewById(R.id.tv_method)
-        val tvStatus:     TextView = view.findViewById(R.id.tv_conn_status)
-        val tvBytes:      TextView = view.findViewById(R.id.tv_bytes)
-        val tvPort:       TextView = view.findViewById(R.id.tv_port)
-        val tvRespCode:   TextView = view.findViewById(R.id.tv_resp_code)
-        val tvTime:       TextView = view.findViewById(R.id.tv_time)
+        val tvAvatar:   TextView = view.findViewById(R.id.tv_avatar)
+        val tvProto:    TextView = view.findViewById(R.id.tv_proto)
+        val tvHost:     TextView = view.findViewById(R.id.tv_host)
+        val tvPort:     TextView = view.findViewById(R.id.tv_port)
+        val tvMethod:   TextView = view.findViewById(R.id.tv_method)
+        val tvPath:     TextView = view.findViewById(R.id.tv_path)
+        val tvRespCode: TextView = view.findViewById(R.id.tv_resp_code)
+        val tvStatus:   TextView = view.findViewById(R.id.tv_conn_status)
+        val tvBytes:    TextView = view.findViewById(R.id.tv_bytes)
+        val tvTime:     TextView = view.findViewById(R.id.tv_time)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
@@ -75,18 +78,28 @@ class ConnectionAdapter(
 
     override fun onBindViewHolder(h: VH, pos: Int) {
         val rec = getItem(pos)
+        val proto = rec.displayProto
+        val protoHex = protoColorFor(proto)
+        val protoColorInt = Color.parseColor(protoHex)
 
-        // Protocol badge
-        val protoLabel = rec.displayProto
-        val protoColor = protoColorFor(protoLabel)
-        h.tvProto.text = " $protoLabel "
-        h.tvProto.setBackgroundColor(Color.parseColor(protoColor))
+        // ── Avatar: first letter of host, colored circle ───────────────────────
+        val letter = rec.displayHost.firstOrNull { it.isLetterOrDigit() }?.uppercaseChar() ?: '?'
+        h.tvAvatar.text = letter.toString()
+        val avatarBg = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(protoColorInt)
+        }
+        h.tvAvatar.background = avatarBg
 
-        // Host + port
+        // ── Protocol badge ─────────────────────────────────────────────────────
+        h.tvProto.text = " $proto "
+        h.tvProto.setBackgroundColor(protoColorInt)
+
+        // ── Host + port ────────────────────────────────────────────────────────
         h.tvHost.text = rec.displayHost
         h.tvPort.text = ":${rec.dstPort}"
 
-        // Method (HTTP) or direction arrow
+        // ── Method ─────────────────────────────────────────────────────────────
         if (rec.method.isNotBlank()) {
             h.tvMethod.visibility = View.VISIBLE
             h.tvMethod.text = rec.method
@@ -94,15 +107,15 @@ class ConnectionAdapter(
             h.tvMethod.visibility = View.GONE
         }
 
-        // Path
+        // ── Path ───────────────────────────────────────────────────────────────
         if (rec.path.isNotBlank()) {
             h.tvPath.visibility = View.VISIBLE
-            h.tvPath.text = rec.displayPath.take(60)
+            h.tvPath.text = rec.displayPath.take(80)
         } else {
             h.tvPath.visibility = View.GONE
         }
 
-        // Response code
+        // ── Response code ──────────────────────────────────────────────────────
         if (rec.responseCode > 0) {
             h.tvRespCode.visibility = View.VISIBLE
             h.tvRespCode.text = rec.responseCode.toString()
@@ -111,32 +124,27 @@ class ConnectionAdapter(
             h.tvRespCode.visibility = View.GONE
         }
 
-        // Status dot
+        // ── Status dot ─────────────────────────────────────────────────────────
         val (statusText, statusColor) = when (rec.status) {
-            ConnStatus.ALIVE   -> "● LIVE" to "#69F0AE"
-            ConnStatus.CLOSING -> "◐ FIN"  to "#FFD54F"
-            ConnStatus.CLOSED  -> "○ DONE" to "#546E7A"
-            ConnStatus.ERROR   -> "✕ ERR"  to "#EF9A9A"
+            ConnStatus.ALIVE   -> "LIVE" to "#69F0AE"
+            ConnStatus.CLOSING -> "FIN"  to "#FFD54F"
+            ConnStatus.CLOSED  -> "DONE" to "#546E7A"
+            ConnStatus.ERROR   -> "ERR"  to "#EF9A9A"
         }
         h.tvStatus.text = statusText
         h.tvStatus.setTextColor(Color.parseColor(statusColor))
 
-        // Traffic bytes
-        val sb = StringBuilder()
-        if (rec.bytesSent > 0) sb.append("↑ ${formatBytes(rec.bytesSent)}")
+        // ── Traffic bytes ──────────────────────────────────────────────────────
+        val bsb = StringBuilder()
+        if (rec.bytesSent > 0) bsb.append("UP ${fmtBytes(rec.bytesSent)}")
         if (rec.bytesReceived > 0) {
-            if (sb.isNotEmpty()) sb.append("  ")
-            sb.append("↓ ${formatBytes(rec.bytesReceived)}")
+            if (bsb.isNotEmpty()) bsb.append("  ")
+            bsb.append("DN ${fmtBytes(rec.bytesReceived)}")
         }
-        h.tvBytes.text = sb.toString()
+        h.tvBytes.text = bsb.toString()
 
-        // Time
-        val elapsed = System.currentTimeMillis() - rec.startTime
-        h.tvTime.text = when {
-            elapsed < 60_000  -> "${elapsed / 1000}s ago"
-            elapsed < 3600000 -> "${elapsed / 60000}m ago"
-            else              -> android.text.format.DateFormat.format("HH:mm:ss", rec.startTime)
-        }
+        // ── Timestamp ──────────────────────────────────────────────────────────
+        h.tvTime.text = TS_FMT.format(Date(rec.startTime))
 
         h.itemView.setOnClickListener { onClick(rec) }
     }
@@ -159,7 +167,7 @@ class ConnectionAdapter(
         else       -> Color.parseColor("#EF9A9A")
     }
 
-    private fun formatBytes(b: Long): String = when {
+    private fun fmtBytes(b: Long): String = when {
         b < 1024       -> "${b}B"
         b < 1024 * 1024 -> "%.1fKB".format(b / 1024.0)
         else            -> "%.1fMB".format(b / (1024.0 * 1024))

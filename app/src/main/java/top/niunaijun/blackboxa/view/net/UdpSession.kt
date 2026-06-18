@@ -56,7 +56,8 @@ class UdpSession(
                 rec.bytesSent += payload.size
                 rec.lastSeen   = System.currentTimeMillis()
                 rec.addEvent(PacketEvent(System.currentTimeMillis(), Direction.OUTBOUND, payload.size,
-                    if (dstPort == 53) "DNS query ${payload.size}B" else "UDP →${payload.size}B"))
+                    if (dstPort == 53) "DNS query ${payload.size}B" else "UDP →${payload.size}B",
+                    rawData = payload.copyOf(minOf(payload.size, PacketEvent.MAX_RAW_PER_EVENT))))
             }
         } catch (e: Exception) {
             Log.w(TAG, "UDP send [$sessionKey]: ${e.message}")
@@ -93,7 +94,8 @@ class UdpSession(
                     rec.bytesReceived += data.size
                     rec.lastSeen = System.currentTimeMillis()
                     rec.addEvent(PacketEvent(System.currentTimeMillis(), Direction.INBOUND, data.size,
-                        if (dstPort == 53) "DNS resp ${data.size}B" else "UDP ←${data.size}B"))
+                        if (dstPort == 53) "DNS resp ${data.size}B" else "UDP ←${data.size}B",
+                        rawData = data.copyOf(minOf(data.size, PacketEvent.MAX_RAW_PER_EVENT))))
                 }
 
                 // Build UDP response packet: src=server, dst=client

@@ -23,7 +23,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="○ VPN INACTIVE"
+            android:text="VPN INACTIVE"
             android:textColor="#546E7A"
             android:textSize="11sp"
             android:fontFamily="monospace"
@@ -107,7 +107,7 @@
             android:layout_width="80dp"
             android:layout_height="36dp"
             android:gravity="center"
-            android:text="▶ START"
+            android:text="START"
             android:textColor="#80DEEA"
             android:textSize="11sp"
             android:fontFamily="monospace"
@@ -184,9 +184,9 @@
             android:paddingEnd="8dp" />
 
         <TextView android:id="@+id/btn_filter_out"
-            style="@style/SubFilterChip" android:text="↑ OUT" android:textColor="#546E7A" />
+            style="@style/SubFilterChip" android:text="OUT" android:textColor="#546E7A" />
         <TextView android:id="@+id/btn_filter_in"
-            style="@style/SubFilterChip" android:text="↓ IN" android:textColor="#546E7A" />
+            style="@style/SubFilterChip" android:text="IN" android:textColor="#546E7A" />
     </LinearLayout>
 
     <!-- Thin separator -->
@@ -219,12 +219,12 @@
             android:orientation="vertical"
             android:gravity="center">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="◈"
-                android:textColor="#1F3040"
-                android:textSize="48sp" />
+            <ImageView
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:src="@drawable/ic_network"
+                android:alpha="0.12"
+                android:contentDescription="" />
 
             <TextView
                 android:layout_width="wrap_content"

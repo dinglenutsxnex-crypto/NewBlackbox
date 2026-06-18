@@ -74,6 +74,12 @@
             android:exported="false"
             android:theme="@style/Theme.BlackBox" />
 
+        <activity
+            android:name=".view.net.ConnectionDetailActivity"
+            android:exported="false"
+            android:theme="@style/Theme.BlackBox"
+            android:parentActivityName=".view.net.NetworkAnalyzerActivity" />
+
         <service
             android:name=".view.net.NetworkAnalyzerVpnService"
             android:exported="false"

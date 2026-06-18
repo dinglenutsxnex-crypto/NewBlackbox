@@ -71,10 +71,9 @@ class NetworkAnalyzerVpnService : VpnService() {
             return START_NOT_STICKY
         }
 
-        val targetPkg = intent?.getStringExtra(EXTRA_PACKAGE)
-        Log.i(TAG, "Starting VPN. Target: ${targetPkg ?: "ALL"}")
+        Log.i(TAG, "Starting VPN — container-only mode")
         tracker.clear()
-        startVpn(targetPkg)
+        startVpn()
         return START_STICKY
     }
 
@@ -91,7 +90,7 @@ class NetworkAnalyzerVpnService : VpnService() {
 
     // ── VPN setup ─────────────────────────────────────────────────────────────
 
-    private fun startVpn(targetPackage: String?) {
+    private fun startVpn() {
         try {
             val builder = Builder()
                 .setSession("NetAnalyzer")
@@ -100,10 +99,10 @@ class NetworkAnalyzerVpnService : VpnService() {
                 .addDnsServer(DNS_SERVER)
                 .addRoute("0.0.0.0", 0)
 
-            if (!targetPackage.isNullOrBlank()) {
-                runCatching { builder.addAllowedApplication(targetPackage) }
-                    .onFailure { Log.w(TAG, "addAllowedApplication failed: ${it.message}") }
-            }
+            // Always restrict to the BlackBox host package — this ensures ONLY traffic
+            // from apps running inside the container is captured, never host-device traffic.
+            runCatching { builder.addAllowedApplication(packageName) }
+                .onFailure { Log.w(TAG, "addAllowedApplication(self) failed: ${it.message}") }
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 builder.setMetered(false)
